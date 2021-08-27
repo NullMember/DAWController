@@ -30,12 +30,13 @@ class DAWController():
         self._timeDisplay = [0] * 10
         self._callback = None
     
-    def connect(self, midiInput: str, midiOutput: str) -> bool:
-        try:
-            self._midiInput, self._midiInputName = rtmidi.midiutil.open_midiinput(midiInput, use_virtual = True, interactive = False)
-            self._midiOutput, self._midiOutputName = rtmidi.midiutil.open_midioutput(midiOutput, use_virtual = True, interactive = False)
-        except:
-            raise ConnectionError("Midi port not exist and virtual port already exist or cannot created")
+    def connect(self, midiInput: str, midiOutput: str, virtual = False) -> bool:
+        if not virtual:
+            self._midiInput, self._midiInputName = rtmidi.midiutil.open_midiinput(midiInput, interactive = False)
+            self._midiOutput, self._midiOutputName = rtmidi.midiutil.open_midioutput(midiOutput, interactive = False)
+        else:
+            self._midiInput, self._midiInputName = rtmidi.midiutil.open_midiinput(None, use_virtual = True, interactive = False, port_name = midiInput)
+            self._midiOutput, self._midiOutputName = rtmidi.midiutil.open_midioutput(None, use_virtual = True, interactive = False, port_name = midiOutput)
         self._midiInput.ignore_types(sysex = False)
         self._midiInput.set_callback(self._midiInputCallback)
         self._connected = True
@@ -146,6 +147,15 @@ class DAWController():
     def lcd(self) -> list:
         return (self._lcdDisplay[:56], self._lcdDisplay[56:])
     
+    def lcdSplitted(self) -> list:
+        result = []
+        for i in range(8):
+            result.append([''.join(map(str, self._lcdDisplay[(i * 7):((i * 7) + 7)])), ''.join(map(str, self._lcdDisplay[((i * 7) + 56):(((i * 7) + 56) + 7)]))])
+        return result
+
+    def lcdString(self) -> list:
+        return ''.join(map(str, self._lcdDisplay[:56])) + "\n" + ''.join(map(str, self._lcdDisplay[56:]))
+
     def time(self) -> list:
         return self._timeDisplay
     
